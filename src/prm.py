@@ -34,11 +34,7 @@ class Node:
     def __str__(self):
         return str(self.x) + "," + str(self.y) + "," +\
                str(self.cost) + "," + str(self.parent_index)
-
-
-def prm_planning(sx, sy, gx, gy, ox, oy, rr):
-
-    obstacle_kd_tree = cKDTree(np.vstack((ox, oy)).T)
+def prm_planning(sx, sy, gx, gy, ox, oy, rr): obstacle_kd_tree = cKDTree(np.vstack((ox, oy)).T)
 
     sample_x, sample_y = sample_points(sx, sy, gx, gy,
                                        rr, ox, oy, obstacle_kd_tree)
@@ -282,7 +278,7 @@ def main():
 
     rx, ry = prm_planning(sx, sy, gx, gy, ox, oy, robot_size)
 
-    assert rx, 'Cannot found path'
+    assert rx, 'Cannot find path'
 
     if show_animation:
         plt.plot(rx, ry, "-r")
