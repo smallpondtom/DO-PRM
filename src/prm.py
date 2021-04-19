@@ -281,7 +281,7 @@ def main():
 
     rx, ry = prm_planning(sx, sy, gx, gy, ox, oy, robot_size)
 
-    assert rx, 'Cannot found path'
+    assert rx, 'Cannot find path'
 
     if show_animation:
         plt.plot(rx, ry, "-r")
@@ -291,3 +291,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
