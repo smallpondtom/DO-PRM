@@ -39,7 +39,6 @@ class Node:
 def prm_planning(sx, sy, gx, gy, ox, oy, rr):
 
     obstacle_kd_tree = cKDTree(np.vstack((ox, oy)).T)
-
     sample_x, sample_y = sample_points(sx, sy, gx, gy,
                                        rr, ox, oy, obstacle_kd_tree)
     if show_animation:
