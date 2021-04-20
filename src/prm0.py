@@ -45,7 +45,6 @@ def prm_planning(sx, sy, gx, gy, ox, oy, rr):
         plt.plot(sample_x, sample_y, ".b")
 
     road_map = generate_road_map(sample_x, sample_y, rr, obstacle_kd_tree)
-
     rx, ry = dijkstra_planning(
         sx, sy, gx, gy, road_map, sample_x, sample_y)
 
@@ -112,7 +111,7 @@ def generate_road_map(sample_x, sample_y, rr, obstacle_kd_tree):
 
         road_map.append(edge_id)
 
-    #  plot_road_map(road_map, sample_x, sample_y)
+    # plot_road_map(road_map, sample_x, sample_y)
 
     return road_map
 
@@ -280,7 +279,7 @@ def main():
         plt.axis("equal")
 
     rx, ry = prm_planning(sx, sy, gx, gy, ox, oy, robot_size)
-
+    print(rx, ry)
     assert rx, 'Cannot find path'
 
     if show_animation:

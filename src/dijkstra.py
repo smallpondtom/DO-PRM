@@ -1,3 +1,6 @@
+import math
+from numba import jit
+
 class Node:
     """
     Node class for dijkstra search
@@ -34,13 +37,12 @@ def dijkstra_planning(sx, sy, gx, gy, road_map, sample_x, sample_y):
     goal_node = Node(gx, gy, 0.0, -1)
 
     open_set, closed_set = dict(), dict()
-    open_set[len(road_map) - 2] = start_node
-
+    open_set[0] = start_node
     path_found = True
 
     while True:
         if not open_set:
-            print("Cannot find path")
+            # print("Cannot find path")
             path_found = False
             break
 
@@ -57,7 +59,7 @@ def dijkstra_planning(sx, sy, gx, gy, road_map, sample_x, sample_y):
         #     plt.pause(0.001)
 
         if c_id == (len(road_map) - 1):
-            print("goal is found!")
+            # print("goal is found!")
             goal_node.parent_index = current.parent_index
             goal_node.cost = current.cost
             break

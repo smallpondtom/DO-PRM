@@ -10,6 +10,7 @@ from prm_NR import adjacency_mat
 from matrix_utils import is_primitive
 
 
+@jit(forceobj=True)
 def sample_points(sx, sy, gx, gy, rr, ox, oy, N, bot_size):
     """
     Function that generates sample points based on the starting point
@@ -42,6 +43,7 @@ def sample_points(sx, sy, gx, gy, rr, ox, oy, N, bot_size):
     return sample_x, sample_y
 
 
+@jit(forceobj=True)
 def generate_obstacles(n: int, sx: float, sy: float,
                         gx: float, gy: float) -> Tuple[list, list, list]:
     """
@@ -85,6 +87,7 @@ def generate_obstacles(n: int, sx: float, sy: float,
     return ox, oy, rr
     
 
+@jit(forceobj=True)
 def generate_map(sx: float, sy: float, gx: float, 
                 gy: float, n: int, N: int, 
                 bot_size: float) -> Tuple[list, list, list, list, list]:
@@ -113,12 +116,13 @@ def plot_setup(sx, sy, gx, gy, ox, oy, rr, x, y):
     plt.show()
 
 
+@jit(forceobj=True)
 def generate_edge(A: np.ndarray):
     edge = list(zip(np.nonzero(A)[0], np.nonzero(A)[1])) 
     return edge 
 
 
-def plot_rm(sx, sy, gx, gy, ox, oy, x, y, edges):
+def plot_rm(sx, sy, gx, gy, ox, oy, rr, x, y, edges):
     # Plot the setup
     fig, ax = plt.subplots()
     plt.plot(sx, sy, '.b')
@@ -130,6 +134,22 @@ def plot_rm(sx, sy, gx, gy, ox, oy, x, y, edges):
     for (i, j) in edges:
         if i != j:
             plt.plot([x[i], x[j]], [y[i], y[j]], '-c', lw=0.2)
+    ax.set_aspect('equal')
+    plt.show()
+
+def plot_final(sx, sy, gx, gy, ox, oy, rr, x, y, edges, rx, ry):
+    # Plot the setup
+    fig, ax = plt.subplots()
+    plt.plot(sx, sy, '.b')
+    for oxi, oyi, ori in zip(ox, oy, rr):
+        circ = plt.Circle((oxi, oyi), ori, color='k')
+        ax.add_patch(circ)
+    plt.plot(gx, gy, '*r')
+    plt.plot(x, y, '.g')
+    for (i, j) in edges:
+        if i != j:
+            plt.plot([x[i], x[j]], [y[i], y[j]], '-c', lw=0.2)
+    plt.plot(rx, ry, '-r', lw=0.25)
     ax.set_aspect('equal')
     plt.show()
 

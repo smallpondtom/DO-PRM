@@ -32,19 +32,24 @@ def adjacency_mat(x_all, y_all, ox, oy, rr):
     """
     n = len(x_all)
     A = np.zeros((n, n))
+    road_map = []
     for i in range(n):
+        temp = []
         for j in range(n):
             if i == j:
                 A[i, j] = 1
             else:
                 if A[j, i] != 0:
                     A[i, j] = A[j, i]
+                    temp.append(j)
                 else:
                     if is_connected_NR(x_all[i], y_all[i], x_all[j], y_all[j],
                                        ox, oy, rr):
                         A[i, j] = 1
+                        temp.append(j)
+        road_map.append(temp)
     A /= A.sum(axis=1, keepdims=True)   # make it row stochastic
-    return A
+    return A, road_map
 
 
 if __name__=="__main__":
