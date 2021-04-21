@@ -1,4 +1,4 @@
-from mapping import generate_map
+from mapping import generate_map, generate_edge, plot_setup, plot_rm, plot_final
 from matrix_utils import is_primitive
 from prm import adjacency_mat 
 import json 
@@ -10,7 +10,7 @@ from numba import njit, jit
 
 
 @jit(forceobj=True)
-def run_test():
+def run_test(Rlist, Nlist, obs_numlist):
     # start = time.time()
     # Starting point
     sx = 0.0  # x-position
@@ -34,9 +34,9 @@ def run_test():
     iterations = 1000
     storage = dict()
     pbar = tqdm(total=10*4*5*1000)
-    for Rprm in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
-        for N in [10, 20, 50, 100]:
-            for obs_num in [2, 4, 6, 8, 10]:
+    for Rprm in Rlist:
+        for N in Nlist:
+            for obs_num in obs_numlist:
                 ct = 0
                 invent = dict()
                 is_prim_runtime = []
@@ -50,7 +50,7 @@ def run_test():
                     ox, oy, rr, x, y = generate_map(sx, sy, gx, gy, obs_num, N, bot_size)
 
                     # Sample points
-                    # plot_setup(sx, sy, gx, gy, ox, oy, rr, x, y)
+                    plot_setup(sx, sy, gx, gy, ox, oy, rr, x, y)
 
                     x_sample = x 
                     y_sample = y
@@ -79,12 +79,14 @@ def run_test():
                             dx2 = (rx1 - rx0)**2
                             dy2 = (ry1 - ry0)**2
                             d_traj += np.sqrt(dx2 + dy2)
-
                         e = d_traj - d_ref
 
                     accuracy.append(e)
                     path_found.append(pf)
-                    # v = generate_edge(A)
+                    v = generate_edge(A)
+                    # Plot final 
+                    plot_rm(sx, sy, gx, gy, ox, oy, rr, x, y, v)
+                    plot_final(sx, sy, gx, gy, ox, oy, rr, x, y, v, rx, ry)
 
                     if is_primitive(A):
                         is_prim_runtime.append(dt)
@@ -109,7 +111,7 @@ def run_test():
     pbar.close()
     return storage 
 
-storage = run_test()
+storage = run_test([4, 5], [20, 50], [2, 4, 6, 8, 10])
 
 with open("MC_sim_PRM.json", "w") as jfile:
     json.dump(storage, jfile, indent=4)

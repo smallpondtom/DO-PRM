@@ -68,7 +68,7 @@ def dijkstra_planning(sx, sy, gx, gy, road_map, sample_x, sample_y):
         del open_set[c_id]
         # Add it to the closed set
         closed_set[c_id] = current
-
+        
         # expand search grid based on motion model
         for i in range(len(road_map[c_id])):
             n_id = road_map[c_id][i]

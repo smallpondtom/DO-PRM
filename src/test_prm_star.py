@@ -1,56 +1,122 @@
+from dijkstra import dijkstra_planning
+from mapping import generate_edge, plot_rm, plot_final, plot_setup
 from matrix_utils import is_primitive
 from prm_star import generate_map, adjacency_mat
 import json 
+from numba import jit
+import numpy as np
+from tqdm import tqdm 
+import time
 
 
-# start = time.time()
-# Starting point
-sx = 0.0  # x-position
-sy = 0.0  # y-position
+@jit(forceobj=True)
+def run_test(Nlist, obs_numlist):
+    # start = time.time()
+    # Starting point
+    sx = 0.0  # x-position
+    sy = 0.0  # y-position
 
-# Goal point
-gx = 10.0  # x-position
-gy = 10.0  # y-position
+    # Goal point
+    gx = 10.0  # x-position
+    gy = 10.0  # y-position
 
-# # number of obstacles 
-# obs_num = 1
+    # # number of obstacles 
+    # obs_num = 1
 
-# # number of sample points
-# n = 10
-# Radial size of the robot
-bot_size = 0.2
+    # # number of sample points
+    # n = 10
+    # Radial size of the robot
+    bot_size = 0.2
 
-case = 1
-iterations = 1000
-storage = dict()
+    # Ideal trajectory
+    d_ref = 10*np.sqrt(2)
 
-for N in [10, 20, 50, 100]:
-    for obs_num in [2, 4, 6, 8, 10]:
-        ct = 0
-        invent = dict()
-        for i in range(iterations):
-            # Obstacles
-            ox, oy, rr, x, y, R = generate_map(sx, sy, gx, gy, 10, obs_num, N, bot_size)
+    case = 1
+    iterations = 1000
+    storage = dict()
+    pbar = tqdm(total=4*5*1000)
+    for N in Nlist:
+        for obs_num in obs_numlist:
+            ct = 0
+            invent = dict()
+            is_prim_runtime = []
+            not_prim_runtime = []
+            accuracy = []
+            path_found = []
+            is_prim = []
+            for i in range(iterations):
+                start = time.time()
+                # Obstacles
+                ox, oy, rr, x, y, R = generate_map(sx, sy, gx,
+                                                   gy, 10,
+                                                   obs_num,
+                                                   N, bot_size)
 
-            # Sample points
-            # plot_setup(sx, sy, gx, gy, ox, oy, rr, x, y)
+                # Sample points
+                # plot_setup(sx, sy, gx, gy, ox, oy, rr, x, y)
+                x.insert(0, sx)
+                x.append(gx)
+                y.insert(0, sy)
+                y.append(gy)
+                R.insert(0, 1)
+                R.append(1)
 
-            x_sample = x 
-            y_sample = y
-            x.insert(0, sx)
-            x.append(gx)
-            y.insert(0, sy)
-            y.append(gy)
+                A, road_map = adjacency_mat(x, y, ox, oy, rr, R)
+                rx, ry = dijkstra_planning(sx, sy, gx, gy, road_map, x, y)
+                end = time.time()
+                dt = end - start
+                # v = generate_edge(A)
 
-            A = adjacency_mat(x, y, ox, oy, rr, R)
-            # v = generate_edge(A)
-            if is_primitive(A):
-                ct += 1
-        invent['N'] = N
-        invent['Nobs'] = obs_num
-        invent['tot-prim'] = ct  
-        storage[str(case)] = invent 
-        case += 1
+                if not rx:
+                    pf = 0
+                    e = None
+                else:
+                    pf = 1
+                    # Compute the accuracy 
+                    d_traj = 0
+                    for i in range(1, len(rx)):
+                        rx1 = rx[i]
+                        rx0 = rx[i-1]
+                        ry1 = ry[i]
+                        ry0 = ry[i-1]
+                        dx2 = (rx1 - rx0)**2
+                        dy2 = (ry1 - ry0)**2
+                        d_traj += np.sqrt(dx2 + dy2)
+                    e = d_traj - d_ref
+
+                accuracy.append(e)
+                path_found.append(pf)
+                # plot final 
+                # v = generate_edge(a)
+                # plot_rm(sx, sy, gx, gy, ox, oy, rr, x, y, v)
+                # plot_final(sx, sy, gx, gy, ox, oy, rr, x, y, v, rx, ry)
+                if is_primitive(A):
+                    is_prim_runtime.append(dt)
+                    is_prim.append(1)
+                    ct += 1
+                else:
+                    not_prim_runtime.append(dt)
+                    is_prim.append(0)
+                
+                pbar.update(1)
+
+            invent['N'] = N
+            invent['Nobs'] = obs_num
+            invent['connection_rad'] = R
+            invent['tot-prim'] = ct  
+            invent['is_prim_runtime'] = is_prim_runtime
+            invent['not_prim_runtime'] = not_prim_runtime
+            invent['accuracy'] = accuracy
+            invent['path_found'] = path_found
+            invent['is_prim'] = is_prim
+            storage['case'+str(case)] = invent 
+            case += 1
+    pbar.close()
+    return storage
+
+
+storage = run_test([10, 20, 50, 100], [2, 4, 6, 8, 10])
+# storage = run_test([10, 50, 100], [4, 6, 8, 10])
 
 with open("MC_sim_PRM_star.json", "w") as jfile:
     json.dump(storage, jfile, indent=4)

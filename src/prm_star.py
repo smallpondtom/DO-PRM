@@ -15,12 +15,15 @@ def get_radius(rr, field_len, N):
     zeta_b = np.pi
     d = 2  # 2-dimension 
     gamma_prm_star = 2 * (1 + 1/d)**(1/d) * (mu_free/zeta_b)**(1/d)
-    gamma_prm =(1 + random.random()) * gamma_prm_star
-    return gamma_prm * (np.log(N)/N)**(1/d)
+    gamma_prm = (1 + random.random()) * gamma_prm_star
+    if N == 0:
+        return 1
+    else:
+        return gamma_prm * (np.log(N)/N)**(1/d)
 
 
 @jit(forceobj=True)
-def is_connected_star(x1, y1, x2, y2, ox, oy, rr, R):
+def is_connected_star(x1, y1, x2, y2, ox, oy, rr, R1, R2):
     """
     Function that connects 2 nodes with a fixed radius unless the edge is not 
     intersecting with an obstacle.
@@ -38,8 +41,9 @@ def is_connected_star(x1, y1, x2, y2, ox, oy, rr, R):
         )
         if d < rr[i]:
             return False
-
-        if R < b_mag:  # if the 2 points are not within a ball of the varying radius
+        # if the 2 points are not within a ball of the varying radius
+        # for the 2 points
+        if (R1 < b_mag) and (R2 < b_mag):  
             return False
     return True 
 
@@ -52,23 +56,28 @@ def adjacency_mat(x_all, y_all, ox, oy, rr, R):
     """
     n = len(x_all)
     A = np.zeros((n, n))
+    road_map = []
     for i in range(n):
+        temp = []
         for j in range(n):
             if i == j:
                 A[i, j] = 1
             else:
                 if A[j, i] != 0:
                     A[i, j] = A[j, i]
+                    temp.append(j)
                 else:
                     if is_connected_star(x_all[i], y_all[i], x_all[j], y_all[j],
-                                       ox, oy, rr, R[i]):
+                                         ox, oy, rr, R[i], R[j]):
                         A[i, j] = 1
+                        temp.append(j)
+        road_map.append(temp)
     A /= A.sum(axis=1, keepdims=True)   # make it row stochastic
-    return A
+    return A, road_map
 
 
 @jit(forceobj=True)
-def sample_points(sx, sy, gx, gy, rr, ox, oy, n, bot_size, fl):
+def sample_points(sx, sy, gx, gy, rr, ox, oy, N, bot_size, fl):
     """
     Function that generates sample points based on the starting point
     """
@@ -148,10 +157,10 @@ def generate_obstacles(n: int, sx: float, sy: float,
     return ox, oy, rr
 
 
-@njit
+@jit(forceobj=True)
 def generate_map(sx: float, sy: float, gx: float, 
                 gy: float, fl: int, n: int, N: int, 
-                bot_size: float) -> Tuple[list, list, list, list, list]:
+                bot_size: float) -> Tuple[list, list, list, list, list, list]:
     """
     Function that generates the initial map with obstacles and sample points.
     """
